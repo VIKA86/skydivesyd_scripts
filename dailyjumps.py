@@ -4,7 +4,7 @@ import regex
 from sendgrid_mail import send_mail
 from mysql.connector import MySQLConnection, Error
 from python_mysql_dbconfig import read_db_config
-import datetime
+import time
 
 def connect():
     """ Connect to MySQL database """
@@ -20,7 +20,7 @@ def connect():
             return conn
         else:
             print('Connection failed.')
-            return null
+            return None
 
     except Error as error:
         print(error)
@@ -73,12 +73,14 @@ def cleanup_results(sqlrows):
             str_row = str_row.replace("\\xd6", 'Ö')
             cleaned_sql.append(str_row)
         print('Done cleaning up sqldata.')
-        #print(cleaned_sql)
+        #for row in cleaned_sql:
+            #print(row)
         return cleaned_sql
 
 def query_with_fetchall(conn):
     try:
-        date = '2017-10-06'
+        date = '2017-10-06' #TEST
+        #date = time.strftime("%Y-%m-%d")
         #print(date)
         print('Fetching jumpdata for date: ', date)
         cursor = conn.cursor()
@@ -97,6 +99,17 @@ def query_with_fetchall(conn):
         print(e)
         return None
 
+def prettyprint(data):
+    findata = "Lift\tPlan\tHöjd\tTyp\tPris\n"
+    #print('dataposter',len(data))
+    #print('raw_data',data)
+    for rad in data:
+        #print(rad)
+        row = rad.split(',')
+        findata = findata + row[6]+'\t'+row[5]+'\t'+row[7]+'\t'+row[8]+'\t'+row[10]+'\n'
+    #print(findata)
+    return findata
+
 if __name__ == '__main__':
     conn = connect()
     rows = query_with_fetchall(conn)
@@ -105,5 +118,12 @@ if __name__ == '__main__':
         clean_data = cleanup_results(rows)
         mailset = create_mailaddr_set(clean_data)
         maildata = create_maildata(clean_data, mailset)
+        limit = 10 #TEST
+        counter = 1 #TEST
         for mail,value in maildata.items():
-            send_mail(mail,value)
+            findata = prettyprint(value)
+            send_mail(mail,findata)
+            #TEST
+            if counter == limit:
+                break
+            counter = counter + 1
